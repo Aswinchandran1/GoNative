@@ -35,6 +35,7 @@ const Explore = () => {
             </div>
         </section>
     )
+    
 }
 
 export default Explore

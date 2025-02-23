@@ -2,8 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const ExploreCard = () => {
+
     return (
-        <div className='bg-slate-50 rounded-xl overflow-hidden shadow-md'>
+        <div className='bg-slate-50 rounded-xl overflow-hidden shadow-md relative' >
+            <button className='absolute top-2 right-3'><i className="fa-regular fa-heart text-2xl " style={{ color: "#ffff" }}></i>
+            </button>
             <div className="flex flex-col gap-2">
                 <div className="h-[200px] overflow-hidden">
                     <img
@@ -29,7 +32,7 @@ const ExploreCard = () => {
                     </div>
 
                     <div className='flex justify-center'>
-                        <Link to="/view-detil" className='px-10 py-2 bg-blue-100 text-blue-700 font-medium rounded-xl hover:bg-blue-200 transition'>View Details</Link>
+                        <Link to="/view-detail" className='px-10 py-2 bg-blue-100 text-blue-700 font-medium rounded-xl hover:bg-blue-200 transition'>View Details</Link>
                     </div>
                 </div>
             </div>

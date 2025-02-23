@@ -8,7 +8,8 @@ import HostLogin from './HostPages/HostLogin';
 import HostRegister from './HostPages/HostRegister';
 import UserRegister from './Pages/UserRegister';
 import Explore from './Pages/Explore';
-import ViewDetail from './Components/ViewDetail';
+import ViewDetail from './Pages/ViewDetail';
+import Favourites from './Pages/Favourites';
 
 function App() {
   const location = useLocation();
@@ -27,8 +28,9 @@ function App() {
         <Route path="/host-login" element={<HostLogin />} />
         <Route path="/user-register" element={<UserRegister />} />
         <Route path="/host-register" element={<HostRegister />} />
-        <Route path="/explore" element={<Explore/>} />
-        <Route path='/view-detail' element={<ViewDetail/>}/>
+        <Route path="/explore" element={<Explore />} />
+        <Route path='/view-detail' element={<ViewDetail />} />
+        <Route path='/favourites' element={<Favourites/>}/>
       </Routes>
       {/* Conditionally render Footer */}
       {!hideHeaderFooterRoutes.includes(location.pathname) && <Footer />}
