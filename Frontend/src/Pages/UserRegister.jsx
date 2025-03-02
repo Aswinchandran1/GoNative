@@ -12,7 +12,7 @@ const schema = yup.object().shape({
 });
 
 const UserRegister = () => {
-  const [formData, setFormData] = useState({ name: '', nationality: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ userName: '', nationality: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -50,8 +50,8 @@ const UserRegister = () => {
               label="Enter your name"
               variant="outlined"
               size="small"
-              name="name"
-              value={formData.name}
+              name="userName"
+              value={formData.userName}
               onChange={handleChange}
             />
             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
