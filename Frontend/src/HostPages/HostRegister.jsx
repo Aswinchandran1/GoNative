@@ -7,7 +7,6 @@ import Select from '@mui/material/Select';
 import { Link } from 'react-router-dom';
 import * as yup from 'yup';
 
-
 const stepOneSchema = yup.object().shape({
   title: yup.string().required("Experience title is required"),
   googleMapLocation: yup.string().url("Enter a valid URL").required("Google Map location is required"),
@@ -16,6 +15,7 @@ const stepOneSchema = yup.object().shape({
   category: yup.string().required("Category is required"),
   location: yup.string().required("Location is required"),
   description: yup.string().min(20, "Description should be at least 20 characters long").required("Description is required"),
+  experienceImages: yup.array().min(3, "All the three image are required").required("Images are required"),
 });
 
 const stepTwoSchema = yup.object().shape({
@@ -27,13 +27,15 @@ const stepTwoSchema = yup.object().shape({
 });
 
 const HostRegister = () => {
-  const [formData, setFormData] = useState({
+
+  const [regData, setregData] = useState({
     title: "",
     googleMapLocation: "",
     additionalServices: "",
     pricePerPerson: "",
     category: "",
     location: "",
+    experienceImages: [],
     description: "",
     userName: "",
     phone: "",
@@ -45,15 +47,31 @@ const HostRegister = () => {
   const [step, setStep] = useState(1)
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setregData({ ...regData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: '' });
+  };
+
+  const handleImageChange = (e, index) => {
+    const file = e.target.files[0];
+    if (file) {
+      const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+      if (!allowedTypes.includes(file.type)) {
+        setErrors({ ...errors, experienceImages: "Only JPG, PNG, and JPEG formats are allowed" });
+        return;
+      }
+      const newImages = [...regData.experienceImages];
+      newImages[index] = URL.createObjectURL(file);
+      setregData({ ...regData, experienceImages: newImages });
+      // Clear validation error if images are added
+      setErrors({ ...errors, experienceImages: "" });
+    }
   };
 
   const goToNext = async (e) => {
     e.preventDefault()
     try {
-      await stepOneSchema.validate(formData, { abortEarly: false });
-      console.log('Registration Successful:', formData);
+      await stepOneSchema.validate(regData, { abortEarly: false });
+      console.log('Registration Successful:', regData);
       setErrors({});
       setStep(step + 1)
     } catch (validationErrors) {
@@ -68,8 +86,8 @@ const HostRegister = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await stepTwoSchema.validate(formData, { abortEarly: false });
-      console.log('Registration Successful:', formData);
+      await stepTwoSchema.validate(regData, { abortEarly: false });
+      console.log('Registration Successful:', regData);
       setErrors({});
       // API CALL
     } catch (validationErrors) {
@@ -94,7 +112,7 @@ const HostRegister = () => {
                 <label htmlFor="" className='pb-2'>Experience Title :</label>
                 <TextField className='bg-gray-100' id="" label="Enter your service name" variant="outlined" size="small"
                   name="title"
-                  value={formData.title}
+                  value={regData.title}
                   onChange={handleChange}
                 />
                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
@@ -104,7 +122,7 @@ const HostRegister = () => {
                 <label htmlFor="" className='pb-2'>Google map location :</label>
                 <TextField className='bg-gray-100' id="" label="Enter your google map location" variant="outlined" size="small"
                   name="googleMapLocation"
-                  value={formData.googleMapLocation}
+                  value={regData.googleMapLocation}
                   onChange={handleChange}
                 />
                 {errors.googleMapLocation && <p className="text-red-500 text-sm mt-1">{errors.googleMapLocation}</p>}
@@ -114,7 +132,7 @@ const HostRegister = () => {
                 <label htmlFor="" className='pb-2'>Additional services (separate with comas) :</label>
                 <TextField className='bg-gray-100' id="" label="Service1,Service2,Service3...." variant="outlined" size="small"
                   name="additionalServices"
-                  value={formData.additionalServices}
+                  value={regData.additionalServices}
                   onChange={handleChange}
                 />
                 {errors.additionalServices && <p className="text-red-500 text-sm mt-1">{errors.additionalServices}</p>}
@@ -124,7 +142,7 @@ const HostRegister = () => {
                 <label htmlFor="" className='pb-2'>Price/person :</label>
                 <TextField className='bg-gray-100' id="" label="Enter price" variant="outlined" size="small"
                   name="pricePerPerson"
-                  value={formData.pricePerPerson}
+                  value={regData.pricePerPerson}
                   onChange={handleChange}
                 />
                 {errors.pricePerPerson && <p className="text-red-500 text-sm mt-1">{errors.pricePerPerson}</p>}
@@ -136,7 +154,7 @@ const HostRegister = () => {
                   <InputLabel id="demo-simple-select-label">Select category</InputLabel>
                   <Select labelId="demo-simple-select-label" id="demo-simple-select" label="Select category"
                     name="category"
-                    value={formData.category}
+                    value={regData.category}
                     onChange={handleChange}
 
                     size="small" className='bg-gray-100 '>
@@ -154,7 +172,7 @@ const HostRegister = () => {
                 <label htmlFor="" className='pb-2'>Location :</label>
                 <TextField className='bg-gray-100' id="" label="Enter your Location" variant="outlined" size="small"
                   name="location"
-                  value={formData.location}
+                  value={regData.location}
                   onChange={handleChange}
                 />
                 {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
@@ -166,7 +184,22 @@ const HostRegister = () => {
                 <label htmlFor="" className='pb-2'>Images : </label>
 
                 <div className="flex justify-around">
-                  <div className='border-2 shadow p-3 rounded'>
+
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className='border-2 shadow p-3 rounded w-1/3 h-32 overflow-hidden flex items-center justify-center'>
+                      <label htmlFor={`img${index}`}>
+                        <input type="file" id={`img${index}`} style={{ display: "none" }} onChange={(e) => handleImageChange(e, index)} />
+                        {regData.experienceImages[index] ? (
+                          <img className="w-full h-full object-cover" src={regData.experienceImages[index]} alt={`Preview ${index}`} />
+                        ) : (
+                          <img width={'80px'} src="https://cdn-icons-png.flaticon.com/512/4725/4725573.png" alt="" />
+                        )}
+                      </label>
+                    </div>
+                  ))}
+
+                  {/* <div className='border-2 shadow p-3 rounded'>
+                  src=" https://cdn-icons-png.flaticon.com/512/4725/4725573.png"
                     <label htmlFor="img1" >
                       <input type="file" id='img1' style={{ display: "none" }} />
                       <img width={'80px'} src="https://cdn-icons-png.flaticon.com/512/4725/4725573.png" alt="" />
@@ -185,17 +218,16 @@ const HostRegister = () => {
                       <input type="file" id='img3' style={{ display: "none" }} />
                       <img width={'80px'} src="https://cdn-icons-png.flaticon.com/512/4725/4725573.png" alt="" />
                     </label>
-                  </div>
-                  
+                  </div> */}
                 </div>
-
+                {errors.experienceImages && <p className="text-red-500 text-sm mt-1">{errors.experienceImages}</p>}
               </div>
 
               <div className='flex flex-col gap-1 mb-5'>
                 <label htmlFor="" className='pb-2'>Description :</label>
                 <TextField className='bg-gray-100 ' id="" label="Write a detail description about your service" placeholder="Placeholder" rows={4} multiline
                   name="description"
-                  value={formData.description}
+                  value={regData.description}
                   onChange={handleChange}
                 />
                 {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
@@ -220,7 +252,7 @@ const HostRegister = () => {
                   <label htmlFor="" className='pb-2'>User Name :</label>
                   <TextField className='bg-gray-100' label="Enter your name" variant="outlined" size="small"
                     name="userName"
-                    value={formData.userName}
+                    value={regData.userName}
                     onChange={handleChange}
                   />
                   {errors.userName && <p className="text-red-500 text-sm mt-1">{errors.userName}</p>}
@@ -230,7 +262,7 @@ const HostRegister = () => {
                   <label htmlFor="" className='pb-2'> Phone:</label>
                   <TextField className='bg-gray-100' label="Enter your phone number" variant="outlined" size="small"
                     name="phone"
-                    value={formData.phone}
+                    value={regData.phone}
                     onChange={handleChange}
                   />
                   {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -240,7 +272,7 @@ const HostRegister = () => {
                   <label htmlFor="" className='pb-2'>Email :</label>
                   <TextField className='bg-gray-100' label="Enter Your email" variant="outlined" size="small"
                     name="email"
-                    value={formData.email}
+                    value={regData.email}
                     onChange={handleChange}
                   />
                   {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
@@ -250,7 +282,7 @@ const HostRegister = () => {
                   <label htmlFor="" className='pb-2'>Password :</label>
                   <TextField className='bg-gray-100' label="Enter Your password" variant="outlined" size="small" type='password'
                     name="password"
-                    value={formData.password}
+                    value={regData.password}
                     onChange={handleChange}
                   />
                   {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
@@ -262,7 +294,7 @@ const HostRegister = () => {
                 <label htmlFor="" className='pb-2'>Description About Host:</label>
                 <TextField className='bg-gray-100 ' id="outlined-textarea" label="Describe your expertise, experience, and what makes you a trustworthy host." rows={4} multiline
                   name="bio"
-                  value={formData.bio}
+                  value={regData.bio}
                   onChange={handleChange}
                 />
                 {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}

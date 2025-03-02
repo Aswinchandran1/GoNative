@@ -5,8 +5,8 @@ const experiences = require('../Models/ExperienceModel');
 
 exports.hostRegisterController = async (req, res) => {
     console.log("Inside hostRegisterController");
-    const { userName, phone, email, password, bio, title, location, googleMapLink, category, pricePerPerson, additionalServices, experienceImages, description, } = req.body
-
+    const { userName, phone, email, password, bio, title, location, googleMapLink, category, pricePerPerson, additionalServices, description, } = req.body
+    console.log(req.files); // Check if files are received correctly
     try {
         const isExistingUser = await users.findOne({ email });
         if (isExistingUser) {
@@ -23,6 +23,8 @@ exports.hostRegisterController = async (req, res) => {
             password: hashedPassword,
         });
         await newUser.save();
+
+        const experienceImages = req.files.map(file => file.path);
 
         const newExperience = new experiences({
             hostId: newUser._id,
