@@ -1,13 +1,13 @@
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const users = require("../Models/userModel");
+const User = require("../Models/userModel");
 
 // Registration for travalers
 exports.travelerRegisterController = async (req, res) => {
     console.log("inside travelerRegisterController");
     const { userName, nationality, email, password } = req.body;
     try {
-        const isExistingUser = await users.findOne({ email });
+        const isExistingUser = await User.findOne({ email });
         if (isExistingUser) {
             return res.status(409).json({ message: "Email already exists, please login" });
         }
@@ -15,7 +15,7 @@ exports.travelerRegisterController = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt)
 
-        const newUser = new users({
+        const newUser = new User({
             userName,
             nationality,
             email,
@@ -35,7 +35,7 @@ exports.travelerLoginController = async (req, res) => {
     const { email, password } = req.body
     try {
 
-        const existingUser = await users.findOne({ email,role: "traveler" })
+        const existingUser = await User.findOne({ email,role: "traveler" })
         if (!existingUser) {
             return res.status(401).json({ message: "Invalid Credentials" })
         }
@@ -46,9 +46,9 @@ exports.travelerLoginController = async (req, res) => {
         }
 
         const token=jwt.sign({userId:existingUser._id,role: existingUser.role},process.env.JWTPASSWORD)
-        console.log(token);
+        // console.log(token);
         
-        res.status(200).json({user:existingUser,token})
+        res.status(200).json({message:"Login Successfull",user:existingUser,token})
     } catch (error) {
         console.log("Error in travelerLoginController", error);
         res.status(500).json({ message: "Internal server error" })

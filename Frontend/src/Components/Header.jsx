@@ -11,8 +11,8 @@ const Header = () => {
 
   // Logout function
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    navigate("/login");
+    sessionStorage.clear()
+    navigate("/");
   };
 
   return (

@@ -43,7 +43,7 @@ function App() {
         <Route path="/user-register" element={<UserRegister />} />
         <Route path="/host-register" element={<HostRegister />} />
         <Route path="/explore" element={<Explore />} />
-        <Route path='/view-detail' element={<ViewDetail />} />
+        <Route path='/view-detail/:id' element={<ViewDetail />} />
         <Route path='/favourites' element={<Favourites />} />
 
         <Route path='/host' element={<HostHome />}>

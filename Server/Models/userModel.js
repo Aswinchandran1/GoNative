@@ -30,9 +30,15 @@ const userSchema = new mongoose.Schema({
     },
     profilePic: {
         type: String
-    }
+    },
+    favorites: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Experience"
+        }
+    ]
 }, { timestamps: true })
 
-const users =  mongoose.model("users", userSchema)
+const User = mongoose.model("User", userSchema)
 
-module.exports = users
+module.exports = User

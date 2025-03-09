@@ -1,6 +1,13 @@
 import React from 'react'
 
+
+
 const ViewUsers = () => {
+
+  const getAllUsers=async()=>{
+    
+  }
+
   return (
     <div style={{ minHeight: "73vh" }}>
       <div className="overflow-x-auto p-4">

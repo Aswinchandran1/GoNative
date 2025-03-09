@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const experienceSchema = new mongoose.Schema({
     hostId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'users', // References the users collection
+        ref: 'User', // References the users collection
         required: true
     },
     title: {
@@ -27,9 +27,10 @@ const experienceSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    additionalServices: [
-        { type: String }
-    ],
+    additionalServices: {
+        type: String
+    }
+    ,
     experienceImages: [
         { type: String }
     ],
@@ -45,7 +46,7 @@ const experienceSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['pending', 'approved', 'rejected'],
-        default: 'pending' 
+        default: 'pending'
     },
     isBlocked: {
         type: Boolean,
@@ -53,5 +54,5 @@ const experienceSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-const experiences = mongoose.model("experiences", experienceSchema);
-module.exports = experiences;
+const Experience = mongoose.model("Experience", experienceSchema);
+module.exports = Experience;

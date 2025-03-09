@@ -4,12 +4,15 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
+import { hostRegisterAPI } from '../Services/allAPI';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const stepOneSchema = yup.object().shape({
   title: yup.string().required("Experience title is required"),
-  googleMapLocation: yup.string().url("Enter a valid URL").required("Google Map location is required"),
+  googleMapLink: yup.string().url("Enter a valid URL").required("Google Map location is required"),
   additionalServices: yup.string().required("At least one service is required"),
   pricePerPerson: yup.number().typeError("Price must be a number").positive("Price must be greater than 0").required("Price is required"),
   category: yup.string().required("Category is required"),
@@ -30,7 +33,7 @@ const HostRegister = () => {
 
   const [regData, setregData] = useState({
     title: "",
-    googleMapLocation: "",
+    googleMapLink: "",
     additionalServices: "",
     pricePerPerson: "",
     category: "",
@@ -45,6 +48,7 @@ const HostRegister = () => {
   });
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(1)
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     setregData({ ...regData, [e.target.name]: e.target.value });
@@ -53,16 +57,21 @@ const HostRegister = () => {
 
   const handleImageChange = (e, index) => {
     const file = e.target.files[0];
+
     if (file) {
       const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
       if (!allowedTypes.includes(file.type)) {
         setErrors({ ...errors, experienceImages: "Only JPG, PNG, and JPEG formats are allowed" });
         return;
       }
-      const newImages = [...regData.experienceImages];
-      newImages[index] = URL.createObjectURL(file);
+
+      const newImages = [...regData.experienceImages]; // Copy existing images array
+      newImages[index] = {
+        file: file,
+        preview: URL.createObjectURL(file), // Generate preview URL
+      };
+
       setregData({ ...regData, experienceImages: newImages });
-      // Clear validation error if images are added
       setErrors({ ...errors, experienceImages: "" });
     }
   };
@@ -89,15 +98,46 @@ const HostRegister = () => {
       await stepTwoSchema.validate(regData, { abortEarly: false });
       console.log('Registration Successful:', regData);
       setErrors({});
-      // API CALL
+      try {
+        const formData = new FormData()
+
+        Object.keys(regData).map((key) => {
+          if (key === "experienceImages") {
+            regData.experienceImages.forEach((imgObj, index) => {
+              if (imgObj?.file) {
+                formData.append(`experienceImages`, imgObj.file); // Append actual file
+              }
+            });
+          } else {
+            formData.append(key, regData[key]);
+          }
+        });
+
+        const reqHeader = {
+          "Content-Type": "multipart/form-data",
+        };
+
+        const res = await hostRegisterAPI(formData, reqHeader)
+        if (res.status == 201) {
+          toast.success(res.data.message);
+          setTimeout(() => navigate('/host-login'), 1000);
+        }
+
+      } catch (error) {
+        toast.error(error.message || "Something went wrong!");
+      }
+
     } catch (validationErrors) {
       const newErrors = {};
       validationErrors.inner.forEach((error) => {
         newErrors[error.path] = error.message;
       });
       setErrors(newErrors);
+      toast.error("Please fix the errors before submitting.");
     }
   }
+
+  console.log("HostRegister", regData);
 
 
   return (
@@ -121,11 +161,11 @@ const HostRegister = () => {
               <div className='flex flex-col gap-1 mb-5'>
                 <label htmlFor="" className='pb-2'>Google map location :</label>
                 <TextField className='bg-gray-100' id="" label="Enter your google map location" variant="outlined" size="small"
-                  name="googleMapLocation"
-                  value={regData.googleMapLocation}
+                  name="googleMapLink"
+                  value={regData.googleMapLink}
                   onChange={handleChange}
                 />
-                {errors.googleMapLocation && <p className="text-red-500 text-sm mt-1">{errors.googleMapLocation}</p>}
+                {errors.googleMapLink && <p className="text-red-500 text-sm mt-1">{errors.googleMapLink}</p>}
               </div>
 
               <div className='flex flex-col gap-1 mb-5'>
@@ -156,7 +196,6 @@ const HostRegister = () => {
                     name="category"
                     value={regData.category}
                     onChange={handleChange}
-
                     size="small" className='bg-gray-100 '>
                     <MenuItem value={"Cultural"}>Cultural</MenuItem>
                     <MenuItem value={"Adventure"}>Adventure</MenuItem>
@@ -180,48 +219,59 @@ const HostRegister = () => {
 
               {/* IMAGES */}
               <div className='flex flex-col gap-1 mb-5'>
-
-                <label htmlFor="" className='pb-2'>Images : </label>
-
-                <div className="flex justify-around">
-
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className='border-2 shadow p-3 rounded w-1/3 h-32 overflow-hidden flex items-center justify-center'>
-                      <label htmlFor={`img${index}`}>
-                        <input type="file" id={`img${index}`} style={{ display: "none" }} onChange={(e) => handleImageChange(e, index)} />
-                        {regData.experienceImages[index] ? (
-                          <img className="w-full h-full object-cover" src={regData.experienceImages[index]} alt={`Preview ${index}`} />
-                        ) : (
-                          <img width={'80px'} src="https://cdn-icons-png.flaticon.com/512/4725/4725573.png" alt="" />
-                        )}
-                      </label>
-                    </div>
-                  ))}
-
-                  {/* <div className='border-2 shadow p-3 rounded'>
-                  src=" https://cdn-icons-png.flaticon.com/512/4725/4725573.png"
-                    <label htmlFor="img1" >
-                      <input type="file" id='img1' style={{ display: "none" }} />
-                      <img width={'80px'} src="https://cdn-icons-png.flaticon.com/512/4725/4725573.png" alt="" />
+                <label htmlFor="" className='pb-2'>Images:</label>
+                <div className="flex justify-around gap-4">
+                  <div className="w-32 h-32 border-2 shadow p-3 rounded flex items-center justify-center overflow-hidden">
+                    <label htmlFor="img1" className="cursor-pointer w-full h-full flex items-center justify-center">
+                      <input
+                        type="file"
+                        id="img1"
+                        style={{ display: "none" }}
+                        onChange={(e) => handleImageChange(e, 0)}
+                      />
+                      <img
+                        className="w-full h-full object-cover"
+                        src={regData.experienceImages[0]?.preview || "https://cdn-icons-png.flaticon.com/512/4725/4725573.png"}
+                        alt="Preview 1"
+                      />
                     </label>
                   </div>
 
-                  <div className='border-2 shadow p-3 rounded'>
-                    <label htmlFor="img2" >
-                      <input type="file" id='img2' style={{ display: "none" }} />
-                      <img width={'80px'} src="https://cdn-icons-png.flaticon.com/512/4725/4725573.png" alt="" />
+                  <div className="w-32 h-32 border-2 shadow p-3 rounded flex items-center justify-center overflow-hidden">
+                    <label htmlFor="img2" className="cursor-pointer w-full h-full flex items-center justify-center">
+                      <input
+                        type="file"
+                        id="img2"
+                        style={{ display: "none" }}
+                        onChange={(e) => handleImageChange(e, 1)}
+                      />
+                      <img
+                        className="w-full h-full object-cover"
+                        src={regData.experienceImages[1]?.preview || "https://cdn-icons-png.flaticon.com/512/4725/4725573.png"}
+                        alt="Preview 2"
+                      />
                     </label>
                   </div>
 
-                  <div className='border-2 shadow p-3 rounded'>
-                    <label htmlFor="img3" >
-                      <input type="file" id='img3' style={{ display: "none" }} />
-                      <img width={'80px'} src="https://cdn-icons-png.flaticon.com/512/4725/4725573.png" alt="" />
+                  <div className="w-32 h-32 border-2 shadow p-3 rounded flex items-center justify-center overflow-hidden">
+                    <label htmlFor="img3" className="cursor-pointer w-full h-full flex items-center justify-center">
+                      <input
+                        type="file"
+                        id="img3"
+                        style={{ display: "none" }}
+                        onChange={(e) => handleImageChange(e, 2)}
+                      />
+                      <img
+                        className="w-full h-full object-cover"
+                        src={regData.experienceImages[2]?.preview || "https://cdn-icons-png.flaticon.com/512/4725/4725573.png"}
+                        alt="Preview 3"
+                      />
                     </label>
-                  </div> */}
+                  </div>
                 </div>
                 {errors.experienceImages && <p className="text-red-500 text-sm mt-1">{errors.experienceImages}</p>}
               </div>
+
 
               <div className='flex flex-col gap-1 mb-5'>
                 <label htmlFor="" className='pb-2'>Description :</label>
@@ -311,6 +361,7 @@ const HostRegister = () => {
           </>
         )
       }
+      <ToastContainer position="top-center" autoClose={1000} />
 
     </div>
   )

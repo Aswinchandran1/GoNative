@@ -1,11 +1,14 @@
 import { Button, TextField } from '@mui/material';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
+import { travelerRegisterAPI } from '../Services/allAPI';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Yup validation schema
 const schema = yup.object().shape({
-  name: yup.string().min(3, 'Name must be at least 3 characters').required('User Name is required'),
+  userName: yup.string().min(3, 'Name must be at least 3 characters').required('User Name is required'),
   nationality: yup.string().matches(/^[A-Za-z\s]+$/, 'Only alphabets allowed').required('Nationality is required'),
   email: yup.string().email('Invalid email format').required('Email is required'),
   password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
@@ -14,7 +17,7 @@ const schema = yup.object().shape({
 const UserRegister = () => {
   const [formData, setFormData] = useState({ userName: '', nationality: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
-
+  const navigate = useNavigate()
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: '' });
@@ -24,9 +27,18 @@ const UserRegister = () => {
     e.preventDefault();
     try {
       await schema.validate(formData, { abortEarly: false });
-      console.log('Registration Successful:', formData);
       setErrors({});
-    } catch (validationErrors) {
+      try {
+        const res = await travelerRegisterAPI(formData)
+        if (res.status == 201) {
+          toast.success(res.data.message);
+          setTimeout(() => navigate('/login'), 1000);
+        }
+      } catch (error) {
+        toast.error(error.message || "Something went wrong!");
+      }
+    }
+    catch (validationErrors) {
       const newErrors = {};
       validationErrors.inner.forEach((error) => {
         newErrors[error.path] = error.message;
@@ -54,7 +66,7 @@ const UserRegister = () => {
               value={formData.userName}
               onChange={handleChange}
             />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            {errors.userName && <p className="text-red-500 text-sm mt-1">{errors.userName}</p>}
           </div>
 
           {/* Nationality */}
@@ -116,12 +128,13 @@ const UserRegister = () => {
 
         {/* Login Link */}
         <p className="text-center mt-4">
-          Already have an account? 
+          Already have an account?
           <Link to={'/login'} className="cursor-pointer text-blue-600 hover:text-blue-500 hover:underline">
             {' '}Sign in
           </Link>
         </p>
       </div>
+      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
   );
 };

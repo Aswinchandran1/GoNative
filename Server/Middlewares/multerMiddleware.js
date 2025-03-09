@@ -9,7 +9,6 @@ const storage = multer.diskStorage({
     }
 });
 
-// ✅ Correct export: Make sure multer is configured properly
 const multerMiddleware = multer({ storage });
 
 module.exports = multerMiddleware;

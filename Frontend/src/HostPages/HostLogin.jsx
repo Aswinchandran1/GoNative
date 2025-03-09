@@ -1,7 +1,10 @@
 import { Button, TextField } from '@mui/material';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
+import { hostLoginAPI } from '../Services/allAPI';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Yup validation schema
 const schema = yup.object().shape({
@@ -10,33 +13,45 @@ const schema = yup.object().shape({
 });
 
 const HostLogin = () => {
-  // State for form data
   const [formData, setFormData] = useState({ email: '', password: '' });
-
-  // State for validation errors
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate()
 
-  // Handle input change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: '' }); // Clear error when user types
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault(); // Prevent default form submission
-
     try {
       await schema.validate(formData, { abortEarly: false });
       console.log('Host Login Successful:', formData);
-      setErrors({}); // Clear errors if validation passes
-    } catch (validationErrors) {
-      // Map Yup errors into an object
-      const newErrors = {};
-      validationErrors.inner.forEach((error) => {
-        newErrors[error.path] = error.message;
-      });
-      setErrors(newErrors);
+      setErrors({});
+      try {
+        const res = await hostLoginAPI(formData)
+        if (res.status == 200) {
+          toast.success("Login Successfull")
+          sessionStorage.setItem("host", JSON.stringify(res.data.host))
+          sessionStorage.setItem("token", res.data.token)
+          setTimeout(() => {
+            navigate('/host')
+            setFormData({ email: '', password: '' })
+          }, 1000);
+        }
+      } catch (error) {
+        toast.error(error.message || "Something went wrong!")
+      }
+    } catch (error) {
+      if (error instanceof yup.ValidationError) {
+        const newErrors = {};
+        error.inner.forEach((err) => {
+          newErrors[err.path] = err.message;
+        });
+        setErrors(newErrors);
+      } else {
+        console.error("Unexpected validation error:", error);
+      }
     }
   };
 
@@ -92,12 +107,13 @@ const HostLogin = () => {
 
         {/* Register Link */}
         <p className="text-center mt-4">
-          Don't have an account? 
+          Don't have an account?
           <Link to={'/host-register'} className="cursor-pointer text-blue-600 hover:text-blue-500 hover:underline">
             {' '}Sign up
           </Link>
         </p>
       </div>
+      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
   );
 };
